@@ -1,0 +1,58 @@
+def gcd(a, b):
+    while b != 0:
+        a, b = b, a % b
+    return a
+
+def extended_gcd(a, b):
+    if a == 0:
+        return b, 0, 1
+    gcd, x1, y1 = extended_gcd(b % a, a)
+    x = y1 - (b // a) * x1
+    y = x1
+    return gcd, x, y
+
+def multiplicative_inverse(e, phi):
+    gcd, x, y = extended_gcd(e, phi)
+    if gcd != 1:
+        raise Exception('The modular inverse does not exist')
+    else:
+        return x % phi
+
+# Given values
+e = 31
+n = 3599
+
+# Finding p and q using trial and error
+def find_prime_factors(n):
+    for i in range(2, int(n**0.5) + 1):
+        if n % i == 0:
+            return i, n // i
+
+p, q = find_prime_factors(n)
+print(f"Prime factors of n: p = {p}, q = {q}")
+
+# Compute φ(n)
+phi = (p - 1) * (q - 1)
+print(f"φ(n) = {phi}")
+
+# Compute the private key d
+d = multiplicative_inverse(e, phi)
+print(f"Private key d = {d}")
+
+# Example usage: encrypt and decrypt a message
+def encrypt(message, e, n):
+    return [pow(ord(char), e, n) for char in message]
+
+def decrypt(ciphertext, d, n):
+    return ''.join([chr(pow(char, d, n)) for char in ciphertext])
+
+# Test the encryption and decryption
+message = "HELLO"
+ciphertext = encrypt(message, e, n)
+print("Ciphertext:", ciphertext)
+
+decrypted_message = decrypt(ciphertext, d, n)
+print("Decrypted message:", decrypted_message)
+
+if __name__ == "__main__":
+    main()
