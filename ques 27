@@ -1,0 +1,81 @@
+import random
+from sympy import isprime, mod_inverse
+from collections import Counter
+
+# Function to generate a random prime number in the range [start, end]
+def generate_prime(start, end):
+    while True:
+        p = random.randint(start, end)
+        if isprime(p):
+            return p
+
+# Function to generate RSA keys
+def generate_rsa_keys():
+    # Generate two distinct prime numbers p and q
+    p = generate_prime(100, 300)
+    q = generate_prime(100, 300)
+    while q == p:
+        q = generate_prime(100, 300)
+    
+    n = p * q
+    phi = (p - 1) * (q - 1)
+    
+    e = 65537
+    d = mod_inverse(e, phi)
+    
+    return (e, n), (d, n)
+
+# Function to encrypt a single character
+def rsa_encrypt_char(char, e, n):
+    return pow(char, e, n)
+
+# Function to decrypt a single character
+def rsa_decrypt_char(cipher, d, n):
+    return pow(cipher, d, n)
+
+# Function to encrypt a message
+def rsa_encrypt_message(message, e, n):
+    return [rsa_encrypt_char(ord(char) - ord('A'), e, n) for char in message]
+
+# Function to decrypt a message
+def rsa_decrypt_message(ciphertext, d, n):
+    return ''.join(chr(rsa_decrypt_char(c, d, n) + ord('A')) for c in ciphertext)
+
+# Frequency analysis attack
+def frequency_analysis_attack(ciphertext, e, n):
+    freq_cipher = Counter(ciphertext)
+    most_common_ciphertext = freq_cipher.most_common()
+    
+    # Assuming 'E' is the most common letter in English text
+    assumed_most_common_plaintext = ord('E') - ord('A')
+    
+    # Find corresponding plaintext characters
+    plaintext_mapping = {}
+    for cipher_char, _ in most_common_ciphertext:
+        for possible_plaintext in range(26):
+            if rsa_encrypt_char(possible_plaintext, e, n) == cipher_char:
+                plaintext_mapping[cipher_char] = possible_plaintext
+                break
+    
+    return ''.join(chr(plaintext_mapping[c] + ord('A')) for c in ciphertext)
+
+def main():
+    public_key, private_key = generate_rsa_keys()
+    e, n = public_key
+    d, n = private_key
+
+    message = "HELLO"
+    print(f"Original message: {message}")
+    
+    ciphertext = rsa_encrypt_message(message, e, n)
+    print(f"Encrypted message: {ciphertext}")
+    
+    decrypted_message = rsa_decrypt_message(ciphertext, d, n)
+    print(f"Decrypted message: {decrypted_message}")
+
+    # Simulate frequency analysis attack
+    attacked_message = frequency_analysis_attack(ciphertext, e, n)
+    print(f"Attacked (decrypted) message: {attacked_message}")
+
+if __name__ == "__main__":
+    main()
