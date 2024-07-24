@@ -1,0 +1,37 @@
+import random
+
+# Function to compute modular exponentiation
+def mod_exp(base, exp, mod):
+    return pow(base, exp, mod)
+
+def main():
+    # Public parameters
+    q = 23  # Prime number
+    a = 5   # Primitive root modulo q
+
+    # Alice chooses a secret number xA and computes yA = a^xA mod q
+    xA = random.randint(1, q-1)
+    yA = mod_exp(a, xA, q)
+    print(f"Alice's secret xA: {xA}")
+    print(f"Alice sends yA: {yA}")
+
+    # Bob chooses a secret number xB and computes yB = a^xB mod q
+    xB = random.randint(1, q-1)
+    yB = mod_exp(a, xB, q)
+    print(f"Bob's secret xB: {xB}")
+    print(f"Bob sends yB: {yB}")
+
+    # Alice and Bob compute the shared secret key
+    shared_key_Alice = mod_exp(yB, xA, q)
+    shared_key_Bob = mod_exp(yA, xB, q)
+
+    print(f"Alice's computed shared key: {shared_key_Alice}")
+    print(f"Bob's computed shared key: {shared_key_Bob}")
+
+    if shared_key_Alice == shared_key_Bob:
+        print("Key exchange successful! Both keys match.")
+    else:
+        print("Key exchange failed! Keys do not match.")
+
+if __name__ == "__main__":
+    main()
