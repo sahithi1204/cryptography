@@ -1,0 +1,49 @@
+import math
+
+# Function to compute the greatest common divisor (GCD)
+def gcd(a, b):
+    while b != 0:
+        a, b = b, a % b
+    return a
+
+# Example values
+n = 3599  # Example n = pq
+e = 31    # Example public key
+
+# Plaintext block that has a common factor with n
+m = 1234  # Example plaintext block
+
+# Finding the common factor (p or q)
+common_factor = gcd(m, n)
+
+if common_factor != 1:
+    p = common_factor
+    q = n // p
+    print(f"Found factors of n: p = {p}, q = {q}")
+
+    # Compute φ(n)
+    phi = (p - 1) * (q - 1)
+    print(f"φ(n) = {phi}")
+
+    # Function to perform the Extended Euclidean Algorithm
+    def extended_gcd(a, b):
+        if a == 0:
+            return b, 0, 1
+        gcd, x1, y1 = extended_gcd(b % a, a)
+        x = y1 - (b // a) * x1
+        y = x1
+        return gcd, x, y
+
+    # Function to find the multiplicative inverse of e modulo phi
+    def multiplicative_inverse(e, phi):
+        gcd, x, y = extended_gcd(e, phi)
+        if gcd != 1:
+            raise Exception('The modular inverse does not exist')
+        else:
+            return x % phi
+
+    # Compute the private key d
+    d = multiplicative_inverse(e, phi)
+    print(f"Private key d = {d}")
+else:
+    print("No common factor found between the plaintext block and n.")
