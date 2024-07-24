@@ -1,0 +1,47 @@
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
+import binascii
+
+def cbc_mac(key, message):
+    # Initialize AES cipher in CBC mode with the given key
+    cipher = AES.new(key, AES.MODE_ECB)
+    
+    # Initialize CBC MAC state
+    state = b'\x00' * AES.block_size
+    # Process each block of the message
+    for i in range(0, len(message), AES.block_size):
+        block = message[i:i + AES.block_size]
+        # XOR the block with the current state
+        xor_block = bytes(a ^ b for a, b in zip(state, block))
+        # Encrypt the XORed block
+        state = cipher.encrypt(xor_block)
+    
+    # The final state is the MAC
+    return state
+
+def main():
+    # Key for AES CBC MAC (16 bytes)
+    key = b'Sixteen byte key'
+    
+    # Message X (one block, 16 bytes)
+    X = b'This is a block'
+    
+    # Compute CBC MAC for X
+    T = cbc_mac(key, X)
+    print(f"MAC(T) for X: {binascii.hexlify(T).decode()}")
+
+    # Compute X ⊕ T
+    X_xor_T = bytes(a ^ b for a, b in zip(X, T))
+    
+    # Message X || (X ⊕ T)
+    combined_message = X + X_xor_T
+    
+    # Compute CBC MAC for the two-block message X || (X ⊕ T)
+    mac_combined = cbc_mac(key, combined_message)
+    print(f"MAC for X || (X ⊕ T): {binascii.hexlify(mac_combined).decode()}")
+    
+    # Verify if it is same as the MAC of the original X
+    print(f"MAC for X matches MAC for X || (X ⊕ T): {T == mac_combined}")
+
+if __name__ == "__main__":
+    main()
