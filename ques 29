@@ -1,0 +1,47 @@
+import numpy as np
+
+# Constants
+BLOCK_SIZE = 1024  # Block size in bits
+RATE = BLOCK_SIZE // 2  # Rate portion size (in bits)
+CAPACITY = BLOCK_SIZE // 2  # Capacity portion size (in bits)
+
+# Dimensions
+LANE_SIZE = 64  # Each lane is 64 bits (8 bytes)
+NUM_LANES = BLOCK_SIZE // LANE_SIZE  # Number of lanes
+
+# State matrix
+def initialize_state():
+    # Initialize state matrix with zeros
+    state = np.zeros((5, 5, LANE_SIZE // 8), dtype=np.uint8)  # 5x5 lanes of 8 bytes
+    return state
+
+# Apply a simple XOR operation with a message block
+def apply_message_block(state, message_block):
+    message_matrix = np.zeros((5, 5, LANE_SIZE // 8), dtype=np.uint8)
+    # Fill message_matrix with the message block (assuming message_block is in bits)
+    message_matrix[0, 0, :len(message_block)//8] = message_block[:len(message_block)//8]
+    state[0, 0] ^= message_matrix[0, 0]
+    return state
+
+# Check if all capacity lanes have at least one nonzero bit
+def all_capacity_lanes_nonzero(state):
+    capacity_matrix = state[:, :, :LANE_SIZE // 8]
+    return np.all(np.any(capacity_matrix != 0, axis=(0, 1)))
+
+def main():
+    # Initialize state matrix
+    state = initialize_state()
+    
+    # Simulate applying message blocks
+    message_block = np.random.randint(0, 256, size=(LANE_SIZE // 8), dtype=np.uint8)  # Random message block
+    steps = 0
+    
+    while not all_capacity_lanes_nonzero(state):
+        state = apply_message_block(state, message_block)
+        message_block = np.random.randint(0, 256, size=(LANE_SIZE // 8), dtype=np.uint8)  # New random message block
+        steps += 1
+    
+    print(f"All lanes in the capacity portion have at least one nonzero bit after {steps} steps.")
+
+if __name__ == "__main__":
+    main()
