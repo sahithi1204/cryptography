@@ -1,0 +1,88 @@
+import itertools
+
+# Function to perform the XOR operation between two binary strings
+def xor_bits(bit_str1, bit_str2):
+    return ''.join('1' if b1 != b2 else '0' for b1, b2 in zip(bit_str1, bit_str2))
+
+# S-DES key scheduling function
+def generate_round_keys(key):
+    # Permutation 10 (P10)
+    p10 = [key[2], key[4], key[1], key[6], key[3], key[9], key[0], key[8], key[7], key[5]]
+    # Split into two halves and perform left shifts
+    left, right = p10[:5], p10[5:]
+    left_shift = lambda x: x[1:] + x[:1]
+    left, right = left_shift(left), left_shift(right)
+    # Permutation 8 (P8) to generate K1
+    k1 = [left[2], left[4], right[2], left[1], right[0], right[4], right[1], left[0]]
+    # Further left shifts for K2
+    left, right = left_shift(left), left_shift(right)
+    left, right = left_shift(left), left_shift(right)
+    k2 = [left[2], left[4], right[2], left[1], right[0], right[4], right[1], left[0]]
+    return ''.join(k1), ''.join(k2)
+
+# Function for initial and inverse initial permutation
+def permute(bits, perm):
+    return ''.join(bits[i] for i in perm)
+
+# Function to apply S-box substitutions
+def sbox_substitution(bits, sbox):
+    row = int(bits[0] + bits[3], 2)
+    col = int(bits[1] + bits[2], 2)
+    return '{0:02b}'.format(sbox[row][col])
+
+# S-DES function F
+def f_k(bits, key):
+    ep = [bits[3], bits[0], bits[1], bits[2], bits[1], bits[2], bits[3], bits[0]]
+    ep_bits = ''.join(bits[i] for i in ep)
+    xored = xor_bits(ep_bits, key)
+    s0 = [[1, 0, 3, 2], [3, 2, 1, 0], [0, 2, 1, 3], [3, 1, 3, 2]]
+    s1 = [[0, 1, 2, 3], [2, 0, 1, 3], [3, 0, 1, 0], [2, 1, 0, 3]]
+    sbox_result = sbox_substitution(xored[:4], s0) + sbox_substitution(xored[4:], s1)
+    p4 = [sbox_result[1], sbox_result[3], sbox_result[2], sbox_result[0]]
+    return ''.join(p4)
+
+# Function to perform S-DES encryption or decryption
+def sdes_encrypt_decrypt(plaintext, key, mode):
+    initial_perm = [1, 5, 2, 0, 3, 7, 4, 6]
+    inverse_initial_perm = [3, 0, 2, 4, 6, 1, 7, 5]
+    round_keys = generate_round_keys(key)
+    if mode == 'decrypt':
+        round_keys = round_keys[::-1]
+    permuted_bits = permute(plaintext, initial_perm)
+    left, right = permuted_bits[:4], permuted_bits[4:]
+    f_result = f_k(right, round_keys[0])
+    left = xor_bits(left, f_result)
+    left, right = right, left
+    f_result = f_k(right, round_keys[1])
+    left = xor_bits(left, f_result)
+    pre_output = left + right
+    return permute(pre_output, inverse_initial_perm)
+
+# CTR mode encryption and decryption
+def ctr_mode(plaintext, key, initial_counter):
+    blocks = [plaintext[i:i+8] for i in range(0, len(plaintext), 8)]
+    counter = int(initial_counter, 2)
+    ciphertext_blocks = []
+    for block in blocks:
+        counter_bits = f'{counter:08b}'
+        encrypted_counter = sdes_encrypt_decrypt(counter_bits, key, 'encrypt')
+        cipher_block = xor_bits(block, encrypted_counter)
+        ciphertext_blocks.append(cipher_block)
+        counter += 1
+    return ''.join(ciphertext_blocks)
+
+# Example usage
+def main():
+    plaintext = '000000010000001000000100'
+    key = '0111111101'
+    initial_counter = '00000000'
+
+    ciphertext = ctr_mode(plaintext, key, initial_counter)
+    decrypted_text = ctr_mode(ciphertext, key, initial_counter)
+
+    print("Plaintext:        ", plaintext)
+    print("Ciphertext:       ", ciphertext)
+    print("Decrypted text:   ", decrypted_text)
+
+if __name__ == "__main__":
+    main()
