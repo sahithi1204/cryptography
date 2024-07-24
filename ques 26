@@ -1,0 +1,68 @@
+import random
+from sympy import isprime, mod_inverse
+
+# Function to generate a random prime number in the range [start, end]
+def generate_prime(start, end):
+    while True:
+        p = random.randint(start, end)
+        if isprime(p):
+            return p
+
+# Function to generate RSA keys
+def generate_rsa_keys():
+    # Step 1: Generate two distinct prime numbers p and q
+    p = generate_prime(100, 300)
+    q = generate_prime(100, 300)
+    while q == p:
+        q = generate_prime(100, 300)
+    
+    # Step 2: Compute n = p * q
+    n = p * q
+    
+    # Step 3: Compute φ(n) = (p-1) * (q-1)
+    phi = (p - 1) * (q - 1)
+    
+    # Step 4: Choose an integer e such that 1 < e < φ(n) and gcd(e, φ(n)) = 1
+    e = 65537  # Commonly used value for e
+    if gcd(e, phi) != 1:
+        for e in range(2, phi):
+            if gcd(e, phi) == 1:
+                break
+    
+    # Step 5: Compute d as the modular multiplicative inverse of e modulo φ(n)
+    d = mod_inverse(e, phi)
+    
+    return (e, n), (d, n)
+
+# Function to compute the greatest common divisor
+def gcd(a, b):
+    while b != 0:
+        a, b = b, a % b
+    return a
+
+# Main function to demonstrate RSA key generation and encryption/decryption
+def main():
+    print("Generating new RSA key pair...")
+    
+    # Generate new RSA keys
+    public_key, private_key = generate_rsa_keys()
+    e, n = public_key
+    d, n = private_key
+    
+    print(f"Public key: (e={e}, n={n})")
+    print(f"Private key: (d={d}, n={n})")
+    
+    # Example message
+    message = 123
+    print(f"\nOriginal message: {message}")
+    
+    # Encrypt the message
+    ciphertext = pow(message, e, n)
+    print(f"Encrypted message: {ciphertext}")
+    
+    # Decrypt the message
+    decrypted_message = pow(ciphertext, d, n)
+    print(f"Decrypted message: {decrypted_message}")
+
+if __name__ == "__main__":
+    main()
