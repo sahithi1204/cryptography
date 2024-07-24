@@ -1,0 +1,65 @@
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
+from Crypto.Random import get_random_bytes
+
+# ECB Mode
+def ecb_encrypt(plaintext, key):
+    cipher = AES.new(key, AES.MODE_ECB)
+    padded_text = pad(plaintext, AES.block_size)
+    ciphertext = cipher.encrypt(padded_text)
+    return ciphertext
+
+def ecb_decrypt(ciphertext, key):
+    cipher = AES.new(key, AES.MODE_ECB)
+    decrypted_padded_text = cipher.decrypt(ciphertext)
+    decrypted_text = unpad(decrypted_padded_text, AES.block_size)
+    return decrypted_text
+
+# CBC Mode
+def cbc_encrypt(plaintext, key, iv):
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    padded_text = pad(plaintext, AES.block_size)
+    ciphertext = cipher.encrypt(padded_text)
+    return ciphertext
+
+def cbc_decrypt(ciphertext, key, iv):
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    decrypted_padded_text = cipher.decrypt(ciphertext)
+    decrypted_text = unpad(decrypted_padded_text, AES.block_size)
+    return decrypted_text
+
+# CFB Mode
+def cfb_encrypt(plaintext, key, iv):
+    cipher = AES.new(key, AES.MODE_CFB, iv)
+    ciphertext = cipher.encrypt(plaintext)
+    return ciphertext
+
+def cfb_decrypt(ciphertext, key, iv):
+    cipher = AES.new(key, AES.MODE_CFB, iv)
+    decrypted_text = cipher.decrypt(ciphertext)
+    return decrypted_text
+
+# Example usage
+def main():
+    key = get_random_bytes(16)  # AES key must be either 16, 24, or 32 bytes long
+    iv = get_random_bytes(16)   # IV must be 16 bytes long for AES
+
+    plaintext = b'This is a secret message that we will encrypt using AES!'  # Example plaintext
+
+    # ECB Mode
+    ecb_ciphertext = ecb_encrypt(plaintext, key)
+    print("ECB Encrypted:", ecb_ciphertext)
+    print("ECB Decrypted:", ecb_decrypt(ecb_ciphertext, key))
+
+    # CBC Mode
+    cbc_ciphertext = cbc_encrypt(plaintext, key, iv)
+    print("CBC Encrypted:", cbc_ciphertext)
+    print("CBC Decrypted:", cbc_decrypt(cbc_ciphertext, key, iv))
+
+    # CFB Mode
+    cfb_ciphertext = cfb_encrypt(plaintext, key, iv)
+    print("CFB Encrypted:", cfb_ciphertext)
+    print("CFB Decrypted:", cfb_decrypt(cfb_ciphertext, key, iv))
+
+if __name__ == "__main__":
+    main()
