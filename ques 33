@@ -1,0 +1,38 @@
+from Crypto.Cipher import DES
+from Crypto.Util.Padding import pad, unpad
+from Crypto.Random import get_random_bytes
+
+def des_encrypt(plaintext, key):
+    # Create a DES cipher object
+    cipher = DES.new(key, DES.MODE_ECB)
+    # Pad the plaintext to be a multiple of 8 bytes (64 bits)
+    padded_text = pad(plaintext, DES.block_size)
+    # Encrypt the padded plaintext
+    ciphertext = cipher.encrypt(padded_text)
+    return ciphertext
+
+def des_decrypt(ciphertext, key):
+    # Create a DES cipher object
+    cipher = DES.new(key, DES.MODE_ECB)
+    # Decrypt the ciphertext
+    decrypted_padded_text = cipher.decrypt(ciphertext)
+    # Unpad the decrypted plaintext
+    plaintext = unpad(decrypted_padded_text, DES.block_size)
+    return plaintext
+
+# Example usage
+if __name__ == "__main__":
+    # Generate a random 8-byte (64-bit) key
+    key = get_random_bytes(8)
+    print(f"Key: {key.hex()}")
+
+    # Message to be encrypted
+    message = b'This is a test message.'
+
+    # Encrypt the message
+    ciphertext = des_encrypt(message, key)
+    print(f"Ciphertext: {ciphertext.hex()}")
+
+    # Decrypt the message
+    decrypted_message = des_decrypt(ciphertext, key)
+    print(f"Decrypted Message: {decrypted_message.decode()}")
