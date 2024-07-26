@@ -1,0 +1,55 @@
+import collections
+import string
+
+# English letter frequencies (in descending order of frequency)
+english_freq_order = "etaoinshrdlcumwfgypbvkjxqz"
+
+def calculate_frequencies(text):
+    """Calculate the frequency of each letter in the given text."""
+    text = text.lower()
+    counter = collections.Counter(text)
+    total_letters = sum(counter.values())
+    frequencies = {char: count / total_letters for char, count in counter.items()}
+    return frequencies
+
+def score_text(text):
+    """Score the text based on the frequency of English letters."""
+    frequencies = calculate_frequencies(text)
+    score = sum(frequencies.get(char, 0) * english_freq_order.index(char) for char in frequencies)
+    return score
+
+def shift_text(text, shift):
+    """Shift each letter in the text by the given shift value."""
+    shifted_text = []
+    for char in text:
+        if char.isalpha():
+            shift_base = ord('a') if char.islower() else ord('A')
+            shifted_char = chr((ord(char) - shift_base + shift) % 26 + shift_base)
+            shifted_text.append(shifted_char)
+        else:
+            shifted_text.append(char)
+    return ''.join(shifted_text)
+
+def perform_frequency_attack(ciphertext, top_n=10):
+    """Perform a frequency attack on the ciphertext and return the top N possible plaintexts."""
+    possible_plaintexts = []
+    
+    for shift in range(26):
+        plaintext = shift_text(ciphertext, shift)
+        score = score_text(plaintext)
+        possible_plaintexts.append((plaintext, score))
+    
+    # Sort by score (higher is better)
+    possible_plaintexts.sort(key=lambda x: x[1], reverse=True)
+    
+    return possible_plaintexts[:top_n]
+
+# Example usage
+ciphertext = "Wklv lv d whvw phvvdjh"
+top_n = 10
+possible_plaintexts = perform_frequency_attack(ciphertext, top_n)
+
+print(f"Ciphertext: {ciphertext}")
+print("\nTop possible plaintexts:")
+for i, (plaintext, score) in enumerate(possible_plaintexts, 1):
+    print(f"{i}: {plaintext} (Score: {score:.2f})")
