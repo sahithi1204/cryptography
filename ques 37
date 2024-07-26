@@ -1,0 +1,57 @@
+import collections
+import string
+
+# English letter frequencies from most common to least common
+english_freq_order = "etaoinshrdlcumwfgypbvkjxqz"
+
+def calculate_frequencies(text):
+    """Calculate the frequency of each letter in the given text."""
+    counter = collections.Counter(text)
+    total_letters = sum(counter.values())
+    frequencies = {char: count / total_letters for char, count in counter.items()}
+    return frequencies
+
+def get_most_frequent_letters(text, n=26):
+    """Get the n most frequent letters in the text."""
+    frequencies = calculate_frequencies(text)
+    return [char for char, freq in sorted(frequencies.items(), key=lambda item: item[1], reverse=True)[:n]]
+
+def substitute(text, substitution):
+    """Substitute letters in the text according to the substitution dictionary."""
+    return ''.join(substitution.get(char, char) for char in text)
+
+def generate_substitutions(ciphertext):
+    """Generate possible substitutions based on letter frequencies."""
+    cipher_freq_order = get_most_frequent_letters(ciphertext)
+    possible_substitutions = []
+
+    for i in range(len(cipher_freq_order)):
+        substitution = {}
+        for j, char in enumerate(cipher_freq_order):
+            substitution[char] = english_freq_order[(j + i) % len(english_freq_order)]
+        possible_substitutions.append(substitution)
+    
+    return possible_substitutions
+
+def perform_frequency_attack(ciphertext, top_n=10):
+    """Perform a frequency attack on the ciphertext and return the top N possible plaintexts."""
+    possible_substitutions = generate_substitutions(ciphertext)
+    possible_plaintexts = []
+
+    for substitution in possible_substitutions:
+        plaintext = substitute(ciphertext, substitution)
+        possible_plaintexts.append(plaintext)
+
+    # Sort by some scoring mechanism if needed, for now, we assume all are equally likely
+    return possible_plaintexts[:top_n]
+
+# Example usage
+ciphertext = "gsv jfrxp yildm ulc qfnkh levi gsv ozab wlt"
+
+top_n = 10
+possible_plaintexts = perform_frequency_attack(ciphertext, top_n)
+
+print(f"Ciphertext: {ciphertext}")
+print("\nTop possible plaintexts:")
+for i, plaintext in enumerate(possible_plaintexts, 1):
+    print(f"{i}: {plaintext}")
