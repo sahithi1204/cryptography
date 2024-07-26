@@ -1,0 +1,50 @@
+from Crypto.Cipher import DES
+from Crypto.Util.Padding import pad, unpad
+from Crypto.Random import get_random_bytes
+
+def pad_with_custom_method(plaintext, block_size):
+    """Pad the plaintext using the method of a 1 bit followed by as few zero bits as necessary."""
+    padding_length = block_size - len(plaintext) % block_size
+    padding = b'\x80' + b'\x00' * (padding_length - 1)
+    return plaintext + padding
+
+def unpad_with_custom_method(padded_text, block_size):
+    """Remove the custom padding."""
+    unpadded_text = padded_text.rstrip(b'\x00')
+    if unpadded_text[-1] == 0x80:
+        return unpadded_text[:-1]
+    else:
+        raise ValueError("Invalid padding")
+
+def des_encrypt(plaintext, key, mode, iv=None):
+    cipher = DES.new(key, mode, iv)
+    padded_text = pad_with_custom_method(plaintext, DES.block_size)
+    ciphertext = cipher.encrypt(padded_text)
+    return ciphertext
+
+def des_decrypt(ciphertext, key, mode, iv=None):
+    cipher = DES.new(key, mode, iv)
+    decrypted_padded_text = cipher.decrypt(ciphertext)
+    plaintext = unpad_with_custom_method(decrypted_padded_text, DES.block_size)
+    return plaintext
+
+# Example usage
+if __name__ == "__main__":
+    key = get_random_bytes(8)
+    iv = get_random_bytes(8)
+    message = b'This is a test message.'
+
+    # Encrypt and decrypt with ECB mode
+    ciphertext_ecb = des_encrypt(message, key, DES.MODE_ECB)
+    decrypted_message_ecb = des_decrypt(ciphertext_ecb, key, DES.MODE_ECB)
+    print(f"ECB Mode - Decrypted Message: {decrypted_message_ecb.decode()}")
+
+    # Encrypt and decrypt with CBC mode
+    ciphertext_cbc = des_encrypt(message, key, DES.MODE_CBC, iv)
+    decrypted_message_cbc = des_decrypt(ciphertext_cbc, key, DES.MODE_CBC, iv)
+    print(f"CBC Mode - Decrypted Message: {decrypted_message_cbc.decode()}")
+
+    # Encrypt and decrypt with CFB mode
+    ciphertext_cfb = des_encrypt(message, key, DES.MODE_CFB, iv)
+    decrypted_message_cfb = des_decrypt(ciphertext_cfb, key, DES.MODE_CFB, iv)
+    print(f"CFB Mode - Decrypted Message: {decrypted_message_cfb.decode()}")
