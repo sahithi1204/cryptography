@@ -1,0 +1,39 @@
+from Crypto.PublicKey import DSA, RSA
+from Crypto.Signature import DSS
+from Crypto.Hash import SHA256
+from Crypto.Random import get_random_bytes
+
+# Generate DSA key
+dsa_key = DSA.generate(2048)
+
+# Generate RSA key
+rsa_key = RSA.generate(2048)
+
+# Message to be signed
+message = b'This is a test message.'
+
+# DSA signing
+hash_obj = SHA256.new(message)
+signer_dsa = DSS.new(dsa_key, 'fips-186-3')
+
+# Sign the message twice with DSA
+signature_dsa1 = signer_dsa.sign(hash_obj)
+signature_dsa2 = signer_dsa.sign(hash_obj)
+
+# Display DSA signatures
+print(f"DSA Signature 1: {signature_dsa1.hex()}")
+print(f"DSA Signature 2: {signature_dsa2.hex()}")
+print(f"DSA signatures are different: {signature_dsa1 != signature_dsa2}")
+
+# RSA signing
+hash_obj = SHA256.new(message)
+signer_rsa = pkcs1_15.new(rsa_key)
+
+# Sign the message twice with RSA
+signature_rsa1 = signer_rsa.sign(hash_obj)
+signature_rsa2 = signer_rsa.sign(hash_obj)
+
+# Display RSA signatures
+print(f"RSA Signature 1: {signature_rsa1.hex()}")
+print(f"RSA Signature 2: {signature_rsa2.hex()}")
+print(f"RSA signatures are the same: {signature_rsa1 == signature_rsa2}")
