@@ -1,0 +1,62 @@
+import numpy as np
+import string
+
+def mod_inverse(a, m):
+    """Find modular inverse of a under modulo m."""
+    a = a % m
+    for x in range(1, m):
+        if (a * x) % m == 1:
+            return x
+    raise ValueError("No modular inverse exists for a and m.")
+
+def matrix_mod_inverse(matrix, mod):
+    """Find modular inverse of a matrix."""
+    det = int(np.round(np.linalg.det(matrix))) % mod
+    inv_det = mod_inverse(det, mod)
+    matrix_adj = np.round(np.linalg.inv(matrix) * det).astype(int) % mod
+    matrix_inv = (inv_det * matrix_adj) % mod
+    return matrix_inv
+
+def hill_encrypt(plain_text, key_matrix):
+    """Encrypt plain_text using Hill cipher with key_matrix."""
+    text_matrix = [string.ascii_uppercase.index(c) for c in plain_text]
+    n = int(np.sqrt(len(key_matrix)))
+    text_matrix = np.array(text_matrix).reshape(-1, n)
+    cipher_matrix = np.dot(text_matrix, key_matrix) % 26
+    cipher_text = ''.join([string.ascii_uppercase[int(c)] for c in cipher_matrix.flatten()])
+    return cipher_text
+
+def hill_decrypt(cipher_text, key_matrix):
+    """Decrypt cipher_text using Hill cipher with key_matrix."""
+    n = int(np.sqrt(len(key_matrix)))
+    key_matrix_inv = matrix_mod_inverse(np.array(key_matrix).reshape(n, n), 26)
+    cipher_matrix = [string.ascii_uppercase.index(c) for c in cipher_text]
+    cipher_matrix = np.array(cipher_matrix).reshape(-1, n)
+    plain_matrix = np.dot(cipher_matrix, key_matrix_inv) % 26
+    plain_text = ''.join([string.ascii_uppercase[int(p)] for p in plain_matrix.flatten()])
+    return plain_text
+
+def hill_key_from_pairs(plaintext, ciphertext):
+    """Recover Hill cipher key matrix from known plaintext-ciphertext pairs."""
+    n = int(len(plaintext) ** 0.5)  # Size of the key matrix
+    p_matrix = [string.ascii_upperCASE.index(c) for c in plaintext]
+    c_matrix = [string.ascii_upperCASE.index(c) for c in ciphertext]
+    
+    p_matrix = np.array(p_matrix).reshape(-1, n)
+    c_matrix = np.array(c_matrix).reshape(-1, n)
+    
+    key_matrix = np.dot(c_matrix, np.linalg.inv(p_matrix)) % 26
+    return key_matrix
+
+# Example usage
+plaintext = "ACTSILENT"
+ciphertext = "SULDDIELE"
+
+key_matrix = hill_key_from_pairs(plaintext, ciphertext)
+
+print(f"Key Matrix:\n{key_matrix}")
+ciphertext_encrypted = hill_encrypt(plaintext, key_matrix)
+print(f"Re-encrypted Ciphertext: {ciphertext_encrypted}")
+
+plaintext_decrypted = hill_decrypt(ciphertext, key_matrix)
+print(f"Decrypted Plaintext: {plaintext_decrypted}")
