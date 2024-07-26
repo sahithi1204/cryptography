@@ -1,0 +1,57 @@
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad
+
+# Constants for block sizes
+R_64 = 0x1B
+R_128 = 0x87
+
+def left_shift(input_bytes):
+    """Perform a bitwise left shift on a byte array."""
+    input_int = int.from_bytes(input_bytes, byteorder='big')
+    shifted_int = (input_int << 1) & (2**(len(input_bytes) * 8) - 1)
+    return shifted_int.to_bytes(len(input_bytes), byteorder='big')
+
+def xor_with_constant(input_bytes, constant):
+    """XOR the input byte array with a constant."""
+    input_int = int.from_bytes(input_bytes, byteorder='big')
+    constant_shifted = constant << (len(input_bytes) * 8 - 8)
+    return (input_int ^ constant_shifted).to_bytes(len(input_bytes), byteorder='big')
+
+def generate_subkeys(key, block_size):
+    """Generate the two subkeys for CMAC."""
+    if block_size not in [64, 128]:
+        raise ValueError("Block size must be 64 or 128 bits")
+    
+    if block_size == 64:
+        R = R_64
+        block_size_bytes = 8
+    else:
+        R = R_128
+        block_size_bytes = 16
+
+    # Step 1: Apply the block cipher to the block of all 0 bits
+    zero_block = bytes([0] * block_size_bytes)
+    cipher = AES.new(key, AES.MODE_ECB)
+    L = cipher.encrypt(zero_block)
+
+    # Step 2: Generate K1
+    if L[0] & 0x80:  # if the MSB of L is 1
+        K1 = xor_with_constant(left_shift(L), R)
+    else:
+        K1 = left_shift(L)
+
+    # Step 3: Generate K2
+    if K1[0] & 0x80:  # if the MSB of K1 is 1
+        K2 = xor_with_constant(left_shift(K1), R)
+    else:
+        K2 = left_shift(K1)
+    
+    return K1, K2
+
+# Example usage
+key = b'This is a key123'  # 16-byte key for AES-128
+block_size = 128
+
+K1, K2 = generate_subkeys(key, block_size)
+print(f"K1: {K1.hex()}")
+print(f"K2: {K2.hex()}")
